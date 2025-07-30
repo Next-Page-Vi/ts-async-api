@@ -3,9 +3,9 @@
 import logging
 import os
 from collections import defaultdict
-from typing import Any, Literal, cast
+from typing import Any, Literal, Optional, cast
 
-from pydantic import BaseModel, BeforeValidator, StrictStr, TypeAdapter, ValidationError, model_validator
+from pydantic import BaseModel, BeforeValidator, StrictBytes, StrictStr, TypeAdapter, ValidationError, model_validator
 
 __ESCAPE_MAP: dict[int, bytes] = {
     b"\\"[0]: rb"\\",
@@ -69,7 +69,7 @@ class FlattenInfo:
         self.prefix = prefix
 
 
-StrDictTA = TypeAdapter[dict[str, Any]](dict[StrictStr, Any])
+StrDictTA = TypeAdapter[dict[str, Optional[bytes]]](dict[StrictStr, Optional[StrictBytes]])
 
 
 class FlattenMixin:
@@ -77,40 +77,50 @@ class FlattenMixin:
 
     @model_validator(mode="before")
     @classmethod
-    def __collect_flatten(cls, data: Any) -> Any:
+    def __collect_flatten(cls, data: Any) -> Any:  # noqa: C901, PLR0912
         typed_cls = cast("type[BaseModel]", cls)  # make mypy happy
 
         # 遍历所有 field, 收集 FlattenInfo
         # flatten_prefix -> key
         flatten_map: dict[str, str] = {}
+        unescape_key_set: set[str] = set()
         for k, v in typed_cls.model_fields.items():
             for o in v.metadata:
                 if isinstance(o, FlattenInfo):
                     assert o.prefix not in flatten_map
                     flatten_map[o.prefix] = k
+            if v.annotation in (str, Optional[str]):
+                unescape_key_set.add(k)
         if len(flatten_map) == 0:
             return data
 
         # 检查 data 的类型, 不为 dict 则直接跳过
         try:
             typed_data = StrDictTA.validate_python(data)
+            data.clear()
         except ValidationError:
             return data
 
-        ret: dict[str, Any] = {}
-        flatten_data: dict[str, dict[str, Any]] = defaultdict(dict)
+        ret: dict[str, Optional[bytes | dict[str, Optional[bytes]]]] = data
+        flatten_data: dict[str, dict[str, Optional[bytes]]] = defaultdict(dict)
         # 从 typed_data 中收集 Flatten 的字段并去除 prefix
-        for k, v in typed_data.items():
+        for k, value in typed_data.items():
             for flatten_prefix, nest_key in flatten_map.items():
                 if k.startswith(flatten_prefix):
                     suffix = k[len(flatten_prefix) :]
                     if suffix:
-                        flatten_data[nest_key][suffix] = v
+                        if value is None:
+                            flatten_data[nest_key][suffix] = None
+                        else:
+                            flatten_data[nest_key][suffix] = value
                         break
             else:
-                ret[k] = v
+                if value is not None and k in unescape_key_set:
+                    ret[k] = unescape(value)
+                else:
+                    ret[k] = value
         ret.update(flatten_data)
-        return ret
+        return data
 
 
 __INT_TA = TypeAdapter[int](int)

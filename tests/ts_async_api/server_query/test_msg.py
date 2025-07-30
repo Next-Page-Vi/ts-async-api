@@ -7,7 +7,7 @@ def test_parse_msg() -> None:
         "build": b"1655727713",
         "platform": b"Linux",
     }
-    assert parse_msg(b"id=0 msg=ok\\sok") == {"id": b"0", "msg": b"ok ok"}
+    assert parse_msg(b"id=0 msg=ok\\sok") == {"id": b"0", "msg": b"ok\\sok"}
     assert parse_msg(b"123") is None
     assert parse_msg(b"id=0 msg=ok\\sok ") is None
     assert parse_msg(b"reasonmsg") == {"reasonmsg": None}

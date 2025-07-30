@@ -7,7 +7,7 @@ from typing import Optional, Self
 from pydantic import BaseModel
 
 from .exception import ParseException
-from .utils import FlattenMixin, unescape
+from .utils import FlattenMixin
 
 __MSG_PATTERN: re.Pattern[bytes] = re.compile(
     rb"^([a-zA-Z_][a-zA-Z0-9_]+)(?:=(\S+))?( ([a-zA-Z_][a-zA-Z0-9_]+)(?:=(\S+))?)*$"
@@ -25,7 +25,7 @@ def parse_msg(msg_data: bytes) -> Optional[dict[str, Optional[bytes]]]:
         k, v = m.groups()
         assert k not in ret
         if v is not None:
-            ret[k.decode()] = unescape(v)
+            ret[k.decode()] = v
         else:
             ret[k.decode()] = None
     return ret
