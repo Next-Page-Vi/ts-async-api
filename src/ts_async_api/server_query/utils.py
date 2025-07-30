@@ -5,7 +5,7 @@ import os
 from collections import defaultdict
 from typing import Any, Literal, cast
 
-from pydantic import BaseModel, StrictStr, TypeAdapter, ValidationError, model_validator
+from pydantic import BaseModel, BeforeValidator, StrictStr, TypeAdapter, ValidationError, model_validator
 
 __ESCAPE_MAP: dict[int, bytes] = {
     b"\\"[0]: rb"\\",
@@ -111,3 +111,13 @@ class FlattenMixin:
                 ret[k] = v
         ret.update(flatten_data)
         return ret
+
+
+__INT_TA = TypeAdapter[int](int)
+
+def __parse_bytes_int(v: Any) -> int:
+    return __INT_TA.validate_python(v)
+
+
+BytesInt = BeforeValidator(__parse_bytes_int)
+

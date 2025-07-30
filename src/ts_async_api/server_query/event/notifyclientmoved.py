@@ -2,6 +2,8 @@
 
 from typing import Annotated, Optional
 
+from pydantic import TypeAdapter
+
 from ..utils import FlattenInfo
 from .base import EventBase, Invoker
 from .manager import EventManager
@@ -27,4 +29,4 @@ class ClientMovedEvent(EventBase):
     """玩家是被移动时会有该字段"""
 
 
-EventManager.EVENT_TYPE_LIST.append(ClientMovedEvent)
+EventManager.EVENT_TYPE_LIST[ClientMovedEvent.NAME] = TypeAdapter(ClientMovedEvent)

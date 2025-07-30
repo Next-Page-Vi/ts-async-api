@@ -4,8 +4,11 @@ from collections import defaultdict
 from collections.abc import Awaitable, Callable
 from typing import ClassVar, Optional
 
+from pydantic import TypeAdapter
 from sortedcontainers import SortedDict
 
+from ..exception import ParseException
+from ..msg import parse_msg
 from .base import EventBase
 
 EVENT_LIST: list[type[EventBase]] = []
@@ -14,7 +17,7 @@ EVENT_LIST: list[type[EventBase]] = []
 class EventManager:
     """事件管理器"""
 
-    EVENT_TYPE_LIST: ClassVar[list[type[EventBase]]] = []
+    EVENT_TYPE_LIST: ClassVar[dict[str, TypeAdapter[EventBase]]] = {}
     event_listener: dict[type[EventBase], SortedDict[int, list[Callable[[EventBase], Awaitable[bool]]]]]
 
     def __init__(self) -> None:
@@ -27,12 +30,17 @@ class EventManager:
         priority_event_list = self.event_listener[event]
         priority_event_list.setdefault(priority, []).append(callback)
 
-    def parse_event(self, payload: bytes) -> Optional[EventBase]:
+    @classmethod
+    def parse_event(cls, payload: bytes) -> Optional[EventBase]:
         """解析事件"""
-        for event_cls in self.EVENT_TYPE_LIST:
-            event_payload_prefix = f"{event_cls.NAME} ".encode()
+        for event_name, event_ta in cls.EVENT_TYPE_LIST.items():
+            event_payload_prefix = f"{event_name} ".encode()
             if payload.startswith(event_payload_prefix):
-                return event_cls.from_payload(payload[len(event_payload_prefix) :])
+                payload_suffix = payload[len(event_payload_prefix) :]
+                res = parse_msg(payload_suffix)
+                if res is None:
+                    raise ParseException(payload)
+                return event_ta.validate_python(res)
         return None
 
     async def dispatch(self, event: EventBase) -> None:
