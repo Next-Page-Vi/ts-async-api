@@ -2,7 +2,10 @@
 
 import logging
 import os
-from typing import Literal
+from collections import defaultdict
+from typing import Any, Literal, cast
+
+from pydantic import BaseModel, StrictStr, TypeAdapter, ValidationError, model_validator
 
 __ESCAPE_MAP: dict[int, bytes] = {
     b"\\"[0]: rb"\\",
@@ -55,3 +58,56 @@ def init_logger(
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)
         logging.root.addHandler(stream_handler)
+
+
+class FlattenInfo:
+    """flatten model info"""
+
+    prefix: str
+
+    def __init__(self, prefix: str) -> None:
+        self.prefix = prefix
+
+
+StrDictTA = TypeAdapter[dict[str, Any]](dict[StrictStr, Any])
+
+
+class FlattenMixin:
+    """flatten validator mixin"""
+
+    @model_validator(mode="before")
+    @classmethod
+    def __collect_flatten(cls, data: Any) -> Any:
+        typed_cls = cast("type[BaseModel]", cls)  # make mypy happy
+
+        # 遍历所有 field, 收集 FlattenInfo
+        # flatten_prefix -> key
+        flatten_map: dict[str, str] = {}
+        for k, v in typed_cls.model_fields.items():
+            for o in v.metadata:
+                if isinstance(o, FlattenInfo):
+                    assert o.prefix not in flatten_map
+                    flatten_map[o.prefix] = k
+        if len(flatten_map) == 0:
+            return data
+
+        # 检查 data 的类型, 不为 dict 则直接跳过
+        try:
+            typed_data = StrDictTA.validate_python(data)
+        except ValidationError:
+            return data
+
+        ret: dict[str, Any] = {}
+        flatten_data: dict[str, dict[str, Any]] = defaultdict(dict)
+        # 从 typed_data 中收集 Flatten 的字段并去除 prefix
+        for k, v in typed_data.items():
+            for flatten_prefix, nest_key in flatten_map.items():
+                if k.startswith(flatten_prefix):
+                    suffix = k[len(flatten_prefix) :]
+                    if suffix:
+                        flatten_data[nest_key][suffix] = v
+                        break
+            else:
+                ret[k] = v
+        ret.update(flatten_data)
+        return ret

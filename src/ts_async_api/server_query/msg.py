@@ -7,7 +7,7 @@ from typing import Optional, Self
 from pydantic import BaseModel
 
 from .exception import ParseException
-from .utils import unescape
+from .utils import FlattenMixin, unescape
 
 __MSG_PATTERN: re.Pattern[bytes] = re.compile(rb"^((\w+)=(\S+))( (\w+)=(\S+))*$")
 __MSG_KV_PATTERN: re.Pattern[bytes] = re.compile(rb"(\w+)=(\S+)")
@@ -26,7 +26,7 @@ def parse_msg(msg_data: bytes) -> Optional[dict[str, bytes]]:
     return ret
 
 
-class ResBase(BaseModel, ABC, extra="forbid"):
+class ResBase(BaseModel, FlattenMixin, ABC, extra="forbid"):
     """命令的执行结果"""
 
     @classmethod
