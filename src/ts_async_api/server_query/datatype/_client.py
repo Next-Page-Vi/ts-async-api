@@ -30,7 +30,7 @@ class ClientFullInfo(ClientBaseInfo):
     client_outputonly_muted: bool
     client_input_hardware: int
     client_output_hardware: int
-    client_default_channel: Optional[int]
+    client_default_channel: Optional[str]
     client_meta_data: Optional[str]
     client_is_recording: bool
     client_version_sign: Optional[str]
@@ -43,7 +43,7 @@ class ClientFullInfo(ClientBaseInfo):
     client_totalconnections: int
     client_away: bool
     client_away_message: Optional[str]
-    client_flag_avatar: str
+    client_flag_avatar: Optional[str]
     client_talk_power: int
     client_talk_request: int
     client_talk_request_msg: Optional[str]

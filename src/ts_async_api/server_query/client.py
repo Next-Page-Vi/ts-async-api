@@ -34,9 +34,9 @@ class ServerStatus(BaseModel, extra="forbid"):
 class Client:
     """ts client"""
 
-    __CMD_COUNT: int = 10
-    __CMD_COUNT_TIMEOUT: int = 3
-    """每 3 s 可以执行 10 条指令"""
+    # 每 3 s 可以执行 9 条指令
+    __CMD_COUNT: int = 9
+    __CMD_COUNT_TIMEOUT: float = 3.0
 
     host: str
     port: int
