@@ -11,7 +11,13 @@ from .notifyclientleftview import (
     ClientLeftQuitEmptyEvent,
     ClientLeftQuitEvent,
 )
-from .notifyclientmoved import ClientMovedEvent
+from .notifyclientmoved import (
+    ClientMovedByKickEvent,
+    ClientMovedByOtherEvent,
+    ClientMovedBySelfEvent,
+    ClientMovedEvent,
+    ClientMovedEventBase,
+)
 
 __all__ = [
     "ClientLeftBanEvent",
@@ -21,7 +27,11 @@ __all__ = [
     "ClientLeftKickEvent",
     "ClientLeftQuitEmptyEvent",
     "ClientLeftQuitEvent",
+    "ClientMovedByKickEvent",
+    "ClientMovedByOtherEvent",
+    "ClientMovedBySelfEvent",
     "ClientMovedEvent",
+    "ClientMovedEventBase",
     "EventBase",
     "EventManager",
     "Invoker",
