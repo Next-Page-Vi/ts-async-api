@@ -71,7 +71,7 @@ class Client:
         ret.event_manager = EventManager()
 
         ret.__execute_lock = Lock()
-        ret.__execute_sem = Semaphore(10)
+        ret.__execute_sem = Semaphore(cls.__CMD_COUNT)
 
         ret.__task_queue_handler_task = asyncio.create_task(ret.__event_task_loop())
         ret.__task_queue = Queue()
@@ -177,6 +177,10 @@ class Client:
         self.__writer.close()
         await self.__writer.wait_closed()
 
+    async def __fill_execute_sem(self) -> None:
+        await asyncio.sleep(self.__CMD_COUNT_TIMEOUT)
+        self.__execute_sem.release()
+
     async def execute_cmd[
         ArgsType: Optional[ArgsBase],
         ResType: Optional[ResBase],
@@ -184,10 +188,11 @@ class Client:
         """执行命令"""
         payload = cmd.generate_payload()
         async with self.__execute_lock:
-            # await self.__execute_sem.acquire()
+            await self.__execute_sem.acquire()
             LOGGER.debug("Write cmd payload %s", payload)
             self.__writer.write(payload)
             await self.__writer.drain()
+            self.__task_queue.put_nowait(asyncio.create_task(self.__fill_execute_sem()))
             return await cmd.parse(self.__msg_queue)
 
     async def server_version(self) -> VersionRsp:
