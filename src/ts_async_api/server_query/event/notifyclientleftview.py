@@ -4,8 +4,9 @@ from typing import Annotated, Literal, Optional, cast
 
 from pydantic import Field, TypeAdapter
 
+from ..datatype import InvokerInfo
 from ..utils import BytesInt, FlattenInfo
-from .base import EventBase, Invoker
+from .base import EventBase
 from .manager import EventManager
 
 
@@ -42,7 +43,7 @@ class ClientLeftKickEvent(ClientLeftEventBase):
 
     reasonid: Annotated[Literal[5], BytesInt]
     reasonmsg: Optional[str]
-    invoker: Annotated[Invoker, FlattenInfo(prefix="invoker")]
+    invoker: Annotated[InvokerInfo, FlattenInfo(prefix="invoker")]
 
 
 class ClientLeftBanEvent(ClientLeftEventBase):
@@ -50,7 +51,7 @@ class ClientLeftBanEvent(ClientLeftEventBase):
 
     reasonid: Annotated[Literal[6], BytesInt]
     reasonmsg: Optional[str]
-    invoker: Annotated[Invoker, FlattenInfo(prefix="invoker")]
+    invoker: Annotated[InvokerInfo, FlattenInfo(prefix="invoker")]
     bantime: int
     """为 0 时表示永久 ban"""
 

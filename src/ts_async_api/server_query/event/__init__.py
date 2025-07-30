@@ -1,6 +1,6 @@
 """event"""
 
-from .base import EventBase, Invoker
+from .base import EventBase
 from .manager import EventManager
 from .notifycliententerview import (
     ClientEnterEvent,
@@ -38,5 +38,4 @@ __all__ = [
     "ClientMovedEventBase",
     "EventBase",
     "EventManager",
-    "Invoker",
 ]

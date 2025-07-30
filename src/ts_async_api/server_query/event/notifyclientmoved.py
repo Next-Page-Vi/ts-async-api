@@ -4,8 +4,9 @@ from typing import Annotated, Literal, Optional, cast
 
 from pydantic import Field, TypeAdapter
 
+from ..datatype import InvokerInfo
 from ..utils import BytesInt, FlattenInfo
-from .base import EventBase, Invoker
+from .base import EventBase
 from .manager import EventManager
 
 
@@ -29,7 +30,7 @@ class ClientMovedByOtherEvent(ClientMovedEventBase):
     """玩家被移动"""
 
     reasonid: Annotated[Literal[1], BytesInt]
-    invoker: Annotated[Invoker, FlattenInfo(prefix="invoker")]
+    invoker: Annotated[InvokerInfo, FlattenInfo(prefix="invoker")]
 
 
 class ClientMovedByKickEvent(ClientMovedEventBase):
@@ -37,7 +38,7 @@ class ClientMovedByKickEvent(ClientMovedEventBase):
 
     reasonid: Annotated[Literal[4], BytesInt]
     reasonmsg: Optional[str]
-    invoker: Annotated[Invoker, FlattenInfo(prefix="invoker")]
+    invoker: Annotated[InvokerInfo, FlattenInfo(prefix="invoker")]
 
 
 type ClientMovedEvent = Annotated[

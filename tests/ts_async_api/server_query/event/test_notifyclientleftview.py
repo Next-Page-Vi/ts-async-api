@@ -1,3 +1,4 @@
+from ts_async_api.server_query.datatype import InvokerInfo
 from ts_async_api.server_query.event import (
     ClientLeftBanEvent,
     ClientLeftConnectLostEvent,
@@ -5,7 +6,6 @@ from ts_async_api.server_query.event import (
     ClientLeftQuitEmptyEvent,
     ClientLeftQuitEvent,
     EventManager,
-    Invoker,
 )
 
 
@@ -32,7 +32,7 @@ def test_kick() -> None:
         b"notifyclientleftview cfid=114 ctid=0 reasonid=5 "
         b"invokerid=1919 invokername=aaa invokeruid=bbb reasonmsg=wtf clid=514"
     ) == ClientLeftKickEvent(
-        cfid=114, ctid=0, clid=514, reasonid=5, invoker=Invoker(id=1919, name="aaa", uid="bbb"), reasonmsg="wtf"
+        cfid=114, ctid=0, clid=514, reasonid=5, invoker=InvokerInfo(id=1919, name="aaa", uid="bbb"), reasonmsg="wtf"
     )
 
 
@@ -41,7 +41,7 @@ def test_kick_empty_msg() -> None:
         b"notifyclientleftview cfid=114 ctid=0 reasonid=5 "
         b"invokerid=1919 invokername=aaa invokeruid=bbb reasonmsg clid=514"
     ) == ClientLeftKickEvent(
-        cfid=114, ctid=0, clid=514, reasonid=5, invoker=Invoker(id=1919, name="aaa", uid="bbb"), reasonmsg=None
+        cfid=114, ctid=0, clid=514, reasonid=5, invoker=InvokerInfo(id=1919, name="aaa", uid="bbb"), reasonmsg=None
     )
 
 
@@ -54,7 +54,7 @@ def test_ban() -> None:
         ctid=0,
         clid=514,
         reasonid=6,
-        invoker=Invoker(id=1919, name="aaa", uid="bbb"),
+        invoker=InvokerInfo(id=1919, name="aaa", uid="bbb"),
         reasonmsg="wtf",
         bantime=60,
     )
