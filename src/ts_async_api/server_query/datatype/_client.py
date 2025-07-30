@@ -1,7 +1,7 @@
 from typing import Optional
 
+from ..datatype import ResBase
 from ..datatype.pydantic import BytesIntList
-from ..msg import ResBase
 
 
 class ClientBaseInfo(ResBase):

@@ -1,6 +1,6 @@
 """datatype"""
 
-from ._base import InvokerInfo, Version
+from ._base import InvokerInfo, ResBase, Version
 from ._client import ClientBaseInfo, ClientFullInfo
 
-__all__ = ["ClientBaseInfo", "ClientFullInfo", "InvokerInfo", "Version"]
+__all__ = ["ClientBaseInfo", "ClientFullInfo", "InvokerInfo", "ResBase", "Version"]

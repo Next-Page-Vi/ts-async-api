@@ -13,9 +13,8 @@ from .cmd.login import LoginArgs, LoginCmd
 from .cmd.servernotifyregister import Event, ServerNotifyRegisterArgs, ServerNotifyRegisterCmd
 from .cmd.use import UseArgs, UseCmd
 from .cmd.version import VersionCmd
-from .datatype import ClientFullInfo, Version
+from .datatype import ClientFullInfo, ResBase, Version
 from .event import EventManager
-from .msg import ResBase
 
 LOGGER = getLogger(__name__)
 

@@ -3,7 +3,7 @@
 from abc import ABC
 from typing import ClassVar
 
-from ..msg import ResBase
+from ..datatype import ResBase
 
 
 class EventBase(ResBase, ABC):

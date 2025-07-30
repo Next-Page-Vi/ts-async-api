@@ -9,8 +9,8 @@ from typing import ClassVar, Optional, cast, get_args, get_origin
 
 from pydantic import BaseModel
 
+from ..datatype import ResBase
 from ..exception import CmdException
-from ..msg import ResBase
 from ..utils import escape
 
 LOGGER = getLogger(__name__)
