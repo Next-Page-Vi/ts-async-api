@@ -5,7 +5,7 @@ from typing import Annotated, Literal, Optional, cast
 from pydantic import Field, TypeAdapter
 
 from ..datatype import InvokerInfo
-from ..utils import BytesInt, FlattenInfo
+from ..datatype.pydantic import BytesInt, FlattenInfo
 from .base import EventBase
 from .manager import EventManager
 

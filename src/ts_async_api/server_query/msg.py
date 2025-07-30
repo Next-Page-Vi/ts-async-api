@@ -6,8 +6,8 @@ from typing import Optional, Self
 
 from pydantic import BaseModel
 
+from .datatype.pydantic import FlattenMixin, UnescapeMixin
 from .exception import ParseException
-from .utils import FlattenMixin, UnescapeMixin
 
 __MSG_PATTERN: re.Pattern[bytes] = re.compile(
     rb"^([a-zA-Z_][a-zA-Z0-9_]+)(?:=(\S+))?( ([a-zA-Z_][a-zA-Z0-9_]+)(?:=(\S+))?)*$"
