@@ -115,9 +115,9 @@ class FlattenMixin:
 
 __INT_TA = TypeAdapter[int](int)
 
+
 def __parse_bytes_int(v: Any) -> int:
     return __INT_TA.validate_python(v)
 
 
 BytesInt = BeforeValidator(__parse_bytes_int)
-
