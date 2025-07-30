@@ -13,6 +13,7 @@ from .cmd.login import LoginArgs, LoginCmd
 from .cmd.servernotifyregister import Event, ServerNotifyRegisterArgs, ServerNotifyRegisterCmd
 from .cmd.use import UseArgs, UseCmd
 from .cmd.version import VersionCmd, VersionRsp
+from .datatype import ClientFullInfo
 from .event import EventManager
 from .msg import ResBase
 
@@ -23,6 +24,12 @@ class SshConfig(BaseModel, extra="forbid"):
     """ssh 设置"""
 
     # TODO(@plusls): 后面支持 ssh 通道
+
+
+class ServerStatus(BaseModel, extra="forbid"):
+    """服务器状态"""
+
+    client_list: dict[int, ClientFullInfo]
 
 
 class Client:
