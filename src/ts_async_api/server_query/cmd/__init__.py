@@ -1,5 +1,5 @@
 """server query cmd"""
 
-from .base import CmdRes
+from .base import ArgsBase, CmdRes
 
-__all__ = ["CmdRes"]
+__all__ = ["ArgsBase", "CmdRes"]

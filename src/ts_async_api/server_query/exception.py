@@ -33,4 +33,4 @@ class CmdException(TsException):
     def __init__(self, cmd: str, res: CmdRes) -> None:
         self.cmd = cmd
         self.res = res
-        super().__init__(f"Execute cmd {cmd!r} failed, id: {res.id}, msg: {res.msg}")
+        super().__init__(f"Execute cmd {cmd!r} failed, id: {res.id}, msg: {res.msg} extra_msg: {res.extra_msg}")
