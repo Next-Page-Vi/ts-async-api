@@ -12,8 +12,8 @@ from .cmd.base import ArgsBase, CmdBase
 from .cmd.login import LoginArgs, LoginCmd
 from .cmd.servernotifyregister import Event, ServerNotifyRegisterArgs, ServerNotifyRegisterCmd
 from .cmd.use import UseArgs, UseCmd
-from .cmd.version import VersionCmd, VersionRsp
-from .datatype import ClientFullInfo
+from .cmd.version import VersionCmd
+from .datatype import ClientFullInfo, Version
 from .event import EventManager
 from .msg import ResBase
 
@@ -192,7 +192,7 @@ class Client:
             self.__task_queue.put_nowait(asyncio.create_task(self.__fill_execute_sem()))
             return await cmd.parse(self.__msg_queue)
 
-    async def server_version(self) -> VersionRsp:
+    async def server_version(self) -> Version:
         """获取 ts server 的版本"""
         return await self.execute_cmd(VersionCmd(args=None))
 

@@ -2,6 +2,8 @@
 
 from pydantic import BaseModel
 
+from ..msg import ResBase
+
 
 class InvokerInfo(BaseModel, extra="forbid"):
     """invoker info"""
@@ -9,3 +11,11 @@ class InvokerInfo(BaseModel, extra="forbid"):
     id: int
     name: str
     uid: str
+
+
+class Version(ResBase):
+    """版本信息"""
+
+    version: str
+    build: int
+    platform: str
