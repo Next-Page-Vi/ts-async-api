@@ -86,7 +86,13 @@ class CmdBase[ArgsType: Optional[ArgsBase], ResType: Optional[ResBase]](ABC):
         """解析命令"""
         msg_data_list: list[bytes] = []
         cmd_res: Optional[CmdRes] = None
-        assert msg_queue.empty()
+
+        dirty_msg: list[bytes] = []
+        while not msg_queue.empty():
+            dirty_msg.append(await msg_queue.get())
+        if len(dirty_msg) != 0:
+            msg = f"msg_queue no empty: {dirty_msg}"
+            raise AssertionError(msg)
         while True:
             msg_payload = await msg_queue.get()
             if msg_payload.startswith(b"error id="):
