@@ -1,10 +1,10 @@
 """server query client"""
 
 import asyncio
-from asyncio import CancelledError, Lock, Queue, Semaphore, StreamReader, StreamWriter, Task
+from asyncio import CancelledError, Event as AsyncioEvent, Lock, Queue, Semaphore, StreamReader, StreamWriter, Task
 from logging import getLogger
 from types import TracebackType
-from typing import Optional, Self
+from typing import Optional, Self, cast
 
 from pydantic import BaseModel
 
@@ -37,14 +37,26 @@ class Client:
     ssh_config: Optional[SshConfig]
     keep_alive_interval: float
     event_manager: EventManager
-    __msg_queue: Queue[bytes]
+
     __execute_lock: Lock
     __execute_sem: Semaphore
+    """执行限速器"""
+
+    __task_queue_handler_task: Task[None]
+    __task_queue: Queue[Task[None]]
+    """任务队列
+
+    event task 和 execute sem 填充会放入其中
+    """
+    __task_queue_shutdown_event: AsyncioEvent
+
+    # IO
     __reader: StreamReader
     __writer: StreamWriter
+    __msg_queue: Queue[bytes]
     __msg_recv_task: Task[None]
+
     __keepalive_task: Task[None]
-    """执行限速"""
 
     @classmethod
     async def new(
@@ -57,14 +69,22 @@ class Client:
         ret.ssh_config = ssh_config
         ret.keep_alive_interval = keep_alive_interval
         ret.event_manager = EventManager()
-        ret.__msg_queue = Queue()
+
         ret.__execute_lock = Lock()
         ret.__execute_sem = Semaphore(10)
+
+        ret.__task_queue_handler_task = asyncio.create_task(ret.__event_task_loop())
+        ret.__task_queue = Queue()
+        ret.__task_queue_shutdown_event = AsyncioEvent()
+
         (ret.__reader, ret.__writer) = await cls.__connect(host, port, ssh_config=ssh_config)
         await ret.__reader.readuntil(b"specific command.\n\r")
         LOGGER.debug("Connect to ts server %s:%d success.", host, port)
+        ret.__msg_queue = Queue()
         ret.__msg_recv_task = asyncio.create_task(ret.__msg_recv_loop())
+
         ret.__keepalive_task = asyncio.create_task(ret.__keepalive_loop())
+
         return ret
 
     async def listen_all_event(self) -> None:
@@ -85,22 +105,38 @@ class Client:
     #         except CancelledError:
     #             break
 
+    async def __event_task_loop(self) -> None:
+        """Event task loop
+
+        为了避免 event handler 卡住 __msg_recv_loop, 需要 create 新的 task 来处理
+        """
+        task_queue_shutdown_event_handler = asyncio.create_task(self.__task_queue_shutdown_event.wait())
+        while True:
+            done, _ = await asyncio.wait(
+                (asyncio.create_task(self.__task_queue.get()), task_queue_shutdown_event_handler),
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            if task_queue_shutdown_event_handler in done:
+                break
+            task = cast("Task[None]", next(iter(done)))
+            await task
+
     async def __msg_recv_loop(self) -> None:
         """从服务器接受消息"""
         while True:
             try:
                 msg_payload = await self.__recv_line()
-                LOGGER.debug("Recv msg: %s", msg_payload)
-                # 如果是事件消息, 则分发事件
-                event = self.event_manager.parse_event(msg_payload)
-                if event is not None:
-                    LOGGER.debug("Recv event: %s", event)
-                    await self.event_manager.dispatch(event)
-                    continue
-                # 否则加入 __msg_queue
-                await self.__msg_queue.put(msg_payload)
             except CancelledError:
                 break
+            LOGGER.debug("Recv msg: %s", msg_payload)
+            # 如果是事件消息, 则分发事件
+            event = self.event_manager.parse_event(msg_payload)
+            if event is not None:
+                LOGGER.debug("Recv event: %s", event)
+                self.__task_queue.put_nowait(asyncio.create_task(self.event_manager.dispatch(event)))
+                continue
+            # 否则加入 __msg_queue
+            self.__msg_queue.put_nowait(msg_payload)
 
     async def __keepalive_loop(self) -> None:
         """防止超时"""
@@ -129,10 +165,15 @@ class Client:
         traceback: Optional[TracebackType] = None,
     ) -> None:
         """__aexit__"""
+        self.__task_queue_shutdown_event.set()
+        await self.__task_queue_handler_task
+
         self.__keepalive_task.cancel()
         await self.__keepalive_task
+
         self.__msg_recv_task.cancel()
         await self.__msg_recv_task
+
         self.__writer.close()
         await self.__writer.wait_closed()
 
