@@ -2,6 +2,9 @@
 
 from .base import EventBase, Invoker
 from .manager import EventManager
+from .notifycliententerview import (
+    ClientEnterEvent,
+)
 from .notifyclientleftview import (
     ClientLeftBanEvent,
     ClientLeftConnectLostEvent,
@@ -20,6 +23,7 @@ from .notifyclientmoved import (
 )
 
 __all__ = [
+    "ClientEnterEvent",
     "ClientLeftBanEvent",
     "ClientLeftConnectLostEvent",
     "ClientLeftEvent",
