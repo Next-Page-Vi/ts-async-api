@@ -72,8 +72,8 @@ class Client:
         for event in Event:
             if event not in (Event.CHANNEL,):
                 await self.execute_cmd(ServerNotifyRegisterCmd(args=ServerNotifyRegisterArgs(event=event)))
-        # TODO(plusls): 根据 client list 的结果进行监听
-        await self.execute_cmd(ServerNotifyRegisterCmd(args=ServerNotifyRegisterArgs(event=Event.CHANNEL, id=68)))
+        # 监听 0 可以收到所有频道的消息
+        await self.execute_cmd(ServerNotifyRegisterCmd(args=ServerNotifyRegisterArgs(event=Event.CHANNEL, id=0)))
 
     # async def __update_execute_sem_loop(self) -> None:
     #     """定时补充 sem"""
