@@ -1,5 +1,5 @@
 """datatype"""
 
-from .base import InvokerInfo
+from ._base import InvokerInfo
 
 __all__ = ["InvokerInfo"]
