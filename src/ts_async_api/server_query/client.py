@@ -95,16 +95,6 @@ class Client:
         # 监听 0 可以收到所有频道的消息
         await self.execute_cmd(ServerNotifyRegisterCmd(args=ServerNotifyRegisterArgs(event=Event.CHANNEL, id=0)))
 
-    # async def __update_execute_sem_loop(self) -> None:
-    #     """定时补充 sem"""
-    #     while True:
-    #         try:
-    #             await asyncio.sleep(self.__CMD_COUNT_TIMEOUT)
-    #             if __execute_finish_sem.
-    #             self.__execute_sem._value
-    #         except CancelledError:
-    #             break
-
     async def __event_task_loop(self) -> None:
         """Event task loop
 
