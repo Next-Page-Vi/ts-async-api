@@ -15,7 +15,9 @@ class ChannelBaseInfo(ResBase):
     channel_order: int
     channel_name: str
     total_clients: int
-    channel_needed_subscribe_power: int
+
+    # 只有 channellist 中会返回, 不知道有没有别的获取方式
+    channel_needed_subscribe_power: Optional[int] = None
 
 
 class ChannelFullInfo(ChannelBaseInfo):
