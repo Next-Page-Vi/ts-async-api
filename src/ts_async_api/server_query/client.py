@@ -19,6 +19,8 @@ from .datatype import ClientFullInfo, Version
 from .event import EventBase, EventManager
 from .event.notifycliententerview import ClientEnterEvent
 from .event.notifyclientleftview import ClientLeftEventBase
+from .event.notifyclientmoved import ClientMovedEventBase
+from .exception import CmdException
 
 LOGGER = getLogger(__name__)
 
@@ -37,8 +39,25 @@ class ServerStatus(BaseModel, extra="forbid"):
     async def update_status_callback(self, client: "Client", event: EventBase) -> bool:
         """收到服务器事件后更新状态"""
         if isinstance(event, ClientEnterEvent):
-            client_full_info = await client.execute_cmd(ClientInfoCmd(args=ClientInfoArgs(clid=event.clid)))
-            self.client_list[client_full_info.clid] = client_full_info
+            client_full_info = await client.query_client_info(event.clid)
+            # 因为是异步的, 可能接到事件和客户端已经退出了会导致查不到, 忽略
+            if client_full_info is not None:
+                self.client_list[client_full_info.clid] = client_full_info
+        elif isinstance(event, ClientMovedEventBase):
+            # 将先前的频道信息写入
+            ignore_event = False
+            if event.clid in self.client_list:
+                event.cfid = self.client_list[event.clid].cid
+            else:
+                # 原本没用户信息则忽略事件
+                ignore_event = True
+            client_full_info = await client.query_client_info(event.clid)
+            if client_full_info is not None:
+                self.client_list[client_full_info.clid] = client_full_info
+            else:
+                # 查不到用户信息则忽略该事件
+                ignore_event = True
+            return ignore_event
         elif isinstance(event, ClientLeftEventBase):
             if event.clid in self.client_list:
                 self.client_list.pop(event.clid)
@@ -121,6 +140,9 @@ class Client:
         # 监听 0 可以收到所有频道的消息
         await self.execute_cmd(ServerNotifyRegisterCmd(args=ServerNotifyRegisterArgs(event=Event.CHANNEL, id=0)))
         self.event_manager.register(ClientEnterEvent, self.server_status.update_status_callback, priority=PRIORITY_HIGH)
+        self.event_manager.register(
+            ClientMovedEventBase, self.server_status.update_status_callback, priority=PRIORITY_HIGH
+        )
         self.event_manager.register(
             ClientLeftEventBase, self.server_status.update_status_callback, priority=PRIORITY_LOW
         )
@@ -218,6 +240,17 @@ class Client:
             await self.__writer.drain()
             self.__task_queue.put_nowait(asyncio.create_task(self.__fill_execute_sem()))
             return await cmd.parse(self.__msg_queue)
+
+    async def query_client_info(self, clid: int) -> Optional[ClientFullInfo]:
+        """向服务器查询 client info"""
+        try:
+            client_full_info = await self.execute_cmd(ClientInfoCmd(args=ClientInfoArgs(clid=clid)))
+        except CmdException as e:
+            # Execute cmd 'clientinfo' failed, id: 512, msg: invalid clientID extra_msg: None
+            if e.res.id == 512:  # noqa: PLR2004
+                return None
+            raise
+        return client_full_info
 
     async def server_version(self) -> Version:
         """获取 ts server 的版本"""

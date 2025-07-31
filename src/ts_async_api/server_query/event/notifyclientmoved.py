@@ -14,6 +14,10 @@ class ClientMovedEventBase(EventBase):
     """玩家频道移动事件"""
 
     NAME = "notifyclientmoved"
+    cfid: int = 0
+    """原先在的频道
+    原始事件中并不包含原始频道, 需要手动维护
+    """
     ctid: int
     """移动到的频道"""
     clid: int
