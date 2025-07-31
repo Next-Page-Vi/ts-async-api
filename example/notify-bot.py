@@ -30,7 +30,7 @@ class AsyncSettings(BaseSettings, cli_enforce_required=True):
 
     async def cli_cmd(self) -> None:
         """Ts server query client main"""
-        init_logger(log_level="INFO")
+        init_logger(log_level=self.log_level)
 
         # 会等所有 task 结束后再销毁 client
         async with await Client.new("ts.plusls.com", 10011) as client:
