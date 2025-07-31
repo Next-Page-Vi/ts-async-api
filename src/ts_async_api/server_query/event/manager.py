@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 from collections.abc import Awaitable, Callable
+from logging import getLogger
 from typing import TYPE_CHECKING, ClassVar, Optional
 
 from pydantic import TypeAdapter
@@ -19,6 +20,8 @@ else:
     Client = Any
 
 EVENT_LIST: list[type[EventBase]] = []
+
+LOGGER = getLogger(__name__)
 
 
 class EventManager:
@@ -65,8 +68,12 @@ class EventManager:
                 )
         all_callback_list.sort()
         for _, _, _, callback in all_callback_list:
-            if await callback(client, event):
-                break
+            try:
+                if await callback(client, event):
+                    break
+            except:
+                LOGGER.exception("exception when call event callback, event: %s, callback: %s", event, callback)
+                raise
 
     def remove(self, event_type: type[EventBase], callback: Callable[["Client", EventBase], Awaitable[bool]]) -> None:
         """手动移除指定的 callback"""

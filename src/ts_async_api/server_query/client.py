@@ -6,7 +6,7 @@ from logging import getLogger
 from types import TracebackType
 from typing import Optional, Self, cast
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from .cmd.base import ArgsBase, CmdBase
 from .cmd.clientinfo import ClientInfoArgs, ClientInfoCmd
@@ -176,7 +176,13 @@ class Client:
                 break
             LOGGER.debug("Recv msg: %s", msg_payload)
             # 如果是事件消息, 则分发事件
-            event = self.event_manager.parse_event(msg_payload)
+            try:
+                event = self.event_manager.parse_event(msg_payload)
+            except ValidationError:
+                # TODO(plusls): 当前事件处理实现的不完备, 完备后去掉 try
+                # 出错后忽略事件
+                LOGGER.exception("exception when parse_event")
+                continue
             if event is not None:
                 LOGGER.debug("Recv event: %s", event)
                 self.__task_queue.put_nowait(asyncio.create_task(self.event_manager.dispatch(self, event)))
