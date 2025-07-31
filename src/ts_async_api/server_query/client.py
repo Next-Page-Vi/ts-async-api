@@ -8,7 +8,10 @@ from typing import Optional, Self, cast
 
 from pydantic import BaseModel
 
+from ts_async_api.server_query.cmd.clientinfo import ClientInfoArgs, ClientInfoCmd
+
 from .cmd.base import ArgsBase, CmdBase
+from .cmd.clientlist import ClientListArgs, ClientListCmd
 from .cmd.login import LoginArgs, LoginCmd
 from .cmd.servernotifyregister import Event, ServerNotifyRegisterArgs, ServerNotifyRegisterCmd
 from .cmd.use import UseArgs, UseCmd
@@ -28,7 +31,7 @@ class SshConfig(BaseModel, extra="forbid"):
 class ServerStatus(BaseModel, extra="forbid"):
     """服务器状态"""
 
-    client_list: dict[int, ClientFullInfo]
+    client_list: dict[int, ClientFullInfo] = {}
 
 
 class Client:
@@ -43,6 +46,7 @@ class Client:
     ssh_config: Optional[SshConfig]
     keep_alive_interval: float
     event_manager: EventManager
+    server_status: ServerStatus
 
     __execute_lock: Lock
     __execute_sem: Semaphore
@@ -75,6 +79,7 @@ class Client:
         ret.ssh_config = ssh_config
         ret.keep_alive_interval = keep_alive_interval
         ret.event_manager = EventManager()
+        ret.server_status = ServerStatus()
 
         ret.__execute_lock = Lock()
         ret.__execute_sem = Semaphore(cls.__CMD_COUNT)
@@ -100,6 +105,10 @@ class Client:
                 await self.execute_cmd(ServerNotifyRegisterCmd(args=ServerNotifyRegisterArgs(event=event)))
         # 监听 0 可以收到所有频道的消息
         await self.execute_cmd(ServerNotifyRegisterCmd(args=ServerNotifyRegisterArgs(event=Event.CHANNEL, id=0)))
+        # self.event_manager.register()
+        for client_base in (await self.execute_cmd(ClientListCmd(args=ClientListArgs()))).client_list:
+            client = await self.execute_cmd(ClientInfoCmd(args=ClientInfoArgs(clid=client_base.clid)))
+            self.server_status.client_list[client.clid] = client
 
     async def __event_task_loop(self) -> None:
         """Event task loop
