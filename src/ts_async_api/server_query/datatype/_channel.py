@@ -4,7 +4,7 @@ from uuid import UUID
 from ..datatype import ResBase
 
 
-class ChannelBaseInfo(ResBase):
+class ChannelBaseInfo(ResBase, extra="ignore"):
     """channel 的基本信息
 
     channellist 中返回
@@ -14,13 +14,13 @@ class ChannelBaseInfo(ResBase):
     pid: int
     channel_order: int
     channel_name: str
-    total_clients: int
 
     # 只有 channellist 中会返回, 不知道有没有别的获取方式
-    channel_needed_subscribe_power: Optional[int] = None
+    # channel_needed_subscribe_power: int
+    # total_clients: int
 
 
-class ChannelFullInfo(ChannelBaseInfo):
+class ChannelFullInfo(ChannelBaseInfo, extra="forbid"):
     """channel 的完整信息"""
 
     channel_topic: str
@@ -31,10 +31,10 @@ class ChannelFullInfo(ChannelBaseInfo):
     channel_maxclients: int
     channel_maxfamilyclients: int
     channel_order: int
-    channel_flag_permanent: int
-    channel_flag_semi_permanent: int
-    channel_flag_default: int
-    channel_flag_password: int
+    channel_flag_permanent: bool
+    channel_flag_semi_permanent: bool
+    channel_flag_default: bool
+    channel_flag_password: bool
     channel_codec_latency_factor: int
     channel_codec_is_unencrypted: bool
     channel_security_salt: Optional[str]
@@ -45,7 +45,7 @@ class ChannelFullInfo(ChannelBaseInfo):
     channel_flag_maxfamilyclients_inherited: bool
     channel_filepath: str
     channel_needed_talk_power: int
-    channel_forced_silence: int
+    channel_forced_silence: bool
     channel_name_phonetic: Optional[str]
     channel_icon_id: int
     channel_banner_gfx_url: Optional[str]
