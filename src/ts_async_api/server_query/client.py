@@ -9,13 +9,15 @@ from typing import Optional, Self, cast
 from pydantic import BaseModel, ValidationError
 
 from .cmd.base import ArgsBase, CmdBase
+from .cmd.channelinfo import ChannelInfoArgs, ChannelInfoCmd
+from .cmd.channellist import ChannelListArgs, ChannelListCmd
 from .cmd.clientinfo import ClientInfoArgs, ClientInfoCmd
 from .cmd.clientlist import ClientListArgs, ClientListCmd
 from .cmd.login import LoginArgs, LoginCmd
 from .cmd.servernotifyregister import Event, ServerNotifyRegisterArgs, ServerNotifyRegisterCmd
 from .cmd.use import UseArgs, UseCmd
 from .cmd.version import VersionCmd
-from .datatype import ClientFullInfo, Version
+from .datatype import ChannelFullInfo, ClientFullInfo, Version
 from .event import EventBase, EventManager
 from .event.notifycliententerview import ClientEnterEvent
 from .event.notifyclientleftview import ClientLeftEventBase
@@ -35,6 +37,7 @@ class ServerStatus(BaseModel, extra="forbid"):
     """服务器状态"""
 
     client_list: dict[int, ClientFullInfo] = {}
+    channel_list: dict[int, ChannelFullInfo] = {}
 
     async def update_status_callback(self, client: "Client", event: EventBase) -> bool:
         """收到服务器事件后更新状态"""
@@ -147,9 +150,16 @@ class Client:
             ClientLeftEventBase, self.server_status.update_status_callback, priority=PRIORITY_LOW
         )
 
-        for client_base in await self.execute_cmd(ClientListCmd(args=ClientListArgs())):
+        simple_client_list = await self.execute_cmd(ClientListCmd(args=ClientListArgs()))
+        for client_base in simple_client_list:
             client = await self.execute_cmd(ClientInfoCmd(args=ClientInfoArgs(clid=client_base.clid)))
             self.server_status.client_list[client.clid] = client
+        LOGGER.info("Sync %d client info success!", len(simple_client_list))
+        simple_channel_list =  await self.execute_cmd(ChannelListCmd(args=ChannelListArgs()))
+        for channel_info in simple_channel_list:
+            channel = await self.execute_cmd(ChannelInfoCmd(args=ChannelInfoArgs(cid=channel_info.cid)))
+            self.server_status.channel_list[channel.cid] = channel
+        LOGGER.info("Sync %d channel info success!", len(simple_channel_list))
 
     async def __event_task_loop(self) -> None:
         """Event task loop

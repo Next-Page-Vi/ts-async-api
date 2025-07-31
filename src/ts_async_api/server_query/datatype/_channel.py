@@ -26,6 +26,7 @@ class ChannelFullInfo(ChannelBaseInfo, extra="forbid"):
     channel_topic: Optional[str]
     channel_description: Optional[str]
     channel_password: Optional[str]
+    """hash base64"""
     channel_codec: int
     channel_codec_quality: int
     channel_maxclients: int
