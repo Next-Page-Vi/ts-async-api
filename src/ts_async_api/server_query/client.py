@@ -52,14 +52,13 @@ class ServerStatus(BaseModel, extra="forbid"):
             if event.clid in self.client_list:
                 event.cfid = self.client_list[event.clid].cid
             else:
-                # 原本没用户信息则忽略事件
+                # 原本没用户信息, 则说明 client 处于启动阶段
+                # 忽略事件
                 ignore_event = True
+            # 由于用户产生了移动, 需要更新用户状态
             client_full_info = await client.query_client_info(event.clid)
             if client_full_info is not None:
                 self.client_list[client_full_info.clid] = client_full_info
-            else:
-                # 查不到用户信息则忽略该事件
-                ignore_event = True
             return ignore_event
         elif isinstance(event, ClientLeftEventBase):
             if event.clid in self.client_list:

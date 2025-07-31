@@ -71,8 +71,9 @@ async def client_left_server_callback(client: Client, event: EventBase) -> bool:
     assert isinstance(event, ClientLeftEventBase)
     client_info = client.server_status.client_list[event.clid]
     LOGGER.info(
-        "用户 %s 离开了服务器",
+        "用户 %s 从频道 %s 离开了服务器",
         client_info.client_nickname,
+        client.server_status.channel_list[client_info.cid].channel_name,
     )
     return False
 
