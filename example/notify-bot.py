@@ -52,6 +52,9 @@ class AsyncSettings(BaseSettings, cli_enforce_required=True):
 async def client_enter_server_callback(client: Client, event: EventBase) -> bool:
     """Enter server callback"""
     assert isinstance(event, ClientEnterEvent)
+    # 可以直接从 server_status 获取对应的信息, 只要执行过程中没有 await
+    # await 后不保证还能获取到对应的信息 (因为可能客户端会退出)
+
     client_info = client.server_status.client_list[event.clid]
     LOGGER.info(
         "用户 %s 加入了服务器, ip: %s, 频道: %d, 客户端版本: %s",
