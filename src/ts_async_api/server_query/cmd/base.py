@@ -22,6 +22,7 @@ class CmdRes(ResBase):
     id: int
     msg: str
     extra_msg: Optional[str] = None
+    failed_permid: Optional[int] = None
 
     def __bool__(self) -> bool:
         """获取命令是否执行成功"""
