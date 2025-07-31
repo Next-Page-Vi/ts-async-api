@@ -53,12 +53,20 @@ class EventManager:
     async def dispatch(self, client: "Client", event: EventBase) -> None:
         """按优先级顺序分发事件。callback 返回 True 表示跳过后续 callback"""
         event_type_list = get_event_obj_parent_type_list(event)
-        for event_type in event_type_list:
+
+        # (-优先级, class 继承 idx, 插入 idx, callback)
+        all_callback_list: list[tuple[int, int, int, Callable[[Client, EventBase], Awaitable[bool]]]] = []
+
+        for event_type_idx, event_type in enumerate(event_type_list):
             priority_event_list = self.event_listener[event_type]
-            for callback_list in reversed(list(priority_event_list.values())):
-                for callback in callback_list:
-                    if await callback(client, event):
-                        break
+            for pri, callback_list in reversed(list(priority_event_list.items())):
+                all_callback_list.extend(
+                    (-pri, event_type_idx, i, callback) for i, callback in enumerate(callback_list)
+                )
+        all_callback_list.sort()
+        for _, _, _, callback in all_callback_list:
+            if await callback(client, event):
+                break
 
     def remove(self, event_type: type[EventBase], callback: Callable[["Client", EventBase], Awaitable[bool]]) -> None:
         """手动移除指定的 callback"""
