@@ -1,6 +1,5 @@
 """clientlist cmd"""
 
-
 from ..datatype import ClientBaseInfo
 from .base import ArgsBase, CmdBase
 
