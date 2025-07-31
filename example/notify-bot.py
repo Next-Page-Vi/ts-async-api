@@ -19,6 +19,8 @@ LOGGER = logging.getLogger(__name__)
 class AsyncSettings(BaseSettings, cli_enforce_required=True):
     """args"""
 
+    host: str = Field(description="服务端域名/IP")
+    port: int = Field(default=10011, description="服务端端口")
     username: str = Field(description="用户名")
     """用户名"""
     password: str = Field(description="密码")
@@ -33,7 +35,7 @@ class AsyncSettings(BaseSettings, cli_enforce_required=True):
         init_logger(log_level=self.log_level)
 
         # 会等所有 task 结束后再销毁 client
-        async with await Client.new("ts.plusls.com", 10011) as client:
+        async with await Client.new(self.host, self.port) as client:
             version = await client.server_version()
             LOGGER.info(
                 "Teamspeaker server version: %s.%d, platform: %s", version.version, version.build, version.platform

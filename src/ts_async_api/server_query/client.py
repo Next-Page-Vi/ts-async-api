@@ -154,7 +154,7 @@ class Client:
             client = await self.execute_cmd(ClientInfoCmd(args=ClientInfoArgs(clid=client_base.clid)))
             self.server_status.client_list[client.clid] = client
         LOGGER.info("Sync %d client info success!", len(simple_client_list))
-        simple_channel_list =  await self.execute_cmd(ChannelListCmd(args=ChannelListArgs()))
+        simple_channel_list = await self.execute_cmd(ChannelListCmd(args=ChannelListArgs()))
         for channel_info in simple_channel_list:
             channel = await self.execute_cmd(ChannelInfoCmd(args=ChannelInfoArgs(cid=channel_info.cid)))
             self.server_status.channel_list[channel.cid] = channel
