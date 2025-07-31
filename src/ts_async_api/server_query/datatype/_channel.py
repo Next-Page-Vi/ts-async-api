@@ -23,8 +23,8 @@ class ChannelBaseInfo(ResBase, extra="ignore"):
 class ChannelFullInfo(ChannelBaseInfo, extra="forbid"):
     """channel 的完整信息"""
 
-    channel_topic: str
-    channel_description: str
+    channel_topic: Optional[str]
+    channel_description: Optional[str]
     channel_password: Optional[str]
     channel_codec: int
     channel_codec_quality: int
