@@ -57,10 +57,10 @@ async def client_enter_server_callback(client: Client, event: EventBase) -> bool
 
     client_info = client.server_status.client_list[event.clid]
     LOGGER.info(
-        "用户 %s 加入了服务器, ip: %s, 频道: %d, 客户端版本: %s",
+        "用户 %s 加入了服务器, ip: %s, 频道: %s, 客户端版本: %s",
         client_info.client_nickname,
         client_info.connection_client_ip,
-        client_info.cid,
+        client.server_status.channel_list[client_info.cid].channel_name,
         client_info.client_version,
     )
     return False
@@ -82,10 +82,10 @@ async def client_moved_callback(client: Client, event: EventBase) -> bool:
     assert isinstance(event, ClientMovedEventBase)
     client_info = client.server_status.client_list[event.clid]
     LOGGER.info(
-        "用户 %s 从频道 %d 切换到频道 %d",
+        "用户 %s 从频道 %s 切换到频道 %s",
         client_info.client_nickname,
-        event.cfid,
-        event.ctid,
+        client.server_status.channel_list[event.cfid].channel_name,
+        client.server_status.channel_list[event.ctid].channel_name,
     )
     return False
 
