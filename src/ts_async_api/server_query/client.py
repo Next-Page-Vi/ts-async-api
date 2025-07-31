@@ -15,7 +15,7 @@ from .cmd.login import LoginArgs, LoginCmd
 from .cmd.servernotifyregister import Event, ServerNotifyRegisterArgs, ServerNotifyRegisterCmd
 from .cmd.use import UseArgs, UseCmd
 from .cmd.version import VersionCmd
-from .datatype import ClientFullInfo, ResBase, Version
+from .datatype import ClientFullInfo, Version
 from .event import EventBase, EventManager
 from .event.notifycliententerview import ClientEnterEvent
 from .event.notifyclientleftview import ClientLeftEventBase
@@ -125,7 +125,7 @@ class Client:
             ClientLeftEventBase, self.server_status.update_status_callback, priority=PRIORITY_LOW
         )
 
-        for client_base in (await self.execute_cmd(ClientListCmd(args=ClientListArgs()))).client_list:
+        for client_base in await self.execute_cmd(ClientListCmd(args=ClientListArgs())):
             client = await self.execute_cmd(ClientInfoCmd(args=ClientInfoArgs(clid=client_base.clid)))
             self.server_status.client_list[client.clid] = client
 
@@ -207,7 +207,7 @@ class Client:
 
     async def execute_cmd[
         ArgsType: Optional[ArgsBase],
-        ResType: Optional[ResBase],
+        ResType,
     ](self, cmd: CmdBase[ArgsType, ResType]) -> ResType:
         """执行命令"""
         payload = cmd.generate_payload()

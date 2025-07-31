@@ -5,7 +5,7 @@ from asyncio import Queue
 from enum import Enum
 from logging import getLogger
 from types import NoneType, get_original_bases
-from typing import ClassVar, Optional, cast, get_args, get_origin
+from typing import Any, ClassVar, Optional, cast, get_args, get_origin
 
 from pydantic import BaseModel
 
@@ -55,7 +55,7 @@ class ArgsBase(BaseModel, ABC, extra="forbid"):
         return b" ".join(payload_list)
 
 
-class CmdBase[ArgsType: Optional[ArgsBase], ResType: Optional[ResBase]](ABC):
+class CmdBase[ArgsType: Optional[ArgsBase], ResType: Any](ABC):
     """命令"""
 
     name: ClassVar[str]
@@ -80,6 +80,10 @@ class CmdBase[ArgsType: Optional[ArgsBase], ResType: Optional[ResBase]](ABC):
         res_type: type[ResType] = get_args(orig_cls)[1]
         if res_type is NoneType:
             return cast("ResType", None)  # ResType 可以是 Optional
+        if get_origin(res_type) is list:
+            res_item_type: type[ResBase] = get_args(res_type)[0]
+            payload_bytes_list = msg_data_list[0].strip().split(b"|")
+            return cast("ResType", [res_item_type.from_payload(p) for p in payload_bytes_list])
         # 不知道为什么没法识别, 强制转换
         return cast("ResType", cast("ResBase", res_type).from_payload(msg_data_list[0].strip()))
 

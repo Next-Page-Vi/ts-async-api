@@ -1,8 +1,7 @@
 """clientlist cmd"""
 
-from typing import Self, override
 
-from ..datatype import ClientBaseInfo, ResBase
+from ..datatype import ClientBaseInfo
 from .base import ArgsBase, CmdBase
 
 
@@ -32,21 +31,7 @@ class ClientListArgs(ArgsBase):
     """Reports on the clients badges"""
 
 
-class ClientListRes(ResBase):
-    """client list result"""
-
-    client_list: list[ClientBaseInfo]
-
-    @override
-    @classmethod
-    def from_payload(cls, payload: bytes) -> Self:
-        """从 payload 中反序列化出 Res"""
-        payload_bytes_list = payload.split(b"|")
-        ret: list[ClientBaseInfo] = [ClientBaseInfo.from_payload(p) for p in payload_bytes_list]
-        return cls(client_list=ret)
-
-
-class ClientListCmd(CmdBase[ClientListArgs, ClientListRes]):
+class ClientListCmd(CmdBase[ClientListArgs, list[ClientBaseInfo]]):
     """clientlist cmd"""
 
     name = "clientlist"
