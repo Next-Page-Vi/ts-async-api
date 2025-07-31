@@ -2,6 +2,12 @@
 
 from .base import EventBase
 from .manager import EventManager
+from .notifychannelcreated import ChannelCreatedEvent
+from .notifychanneldeleted import ChannelDeletedEvent
+from .notifychanneldescriptionchanged import ChannelDescriptionChangedEvent
+from .notifychanneledited import ChannelEditedEvent
+from .notifychannelmoved import ChannelMovedEvent
+from .notifychannelpasswordchanged import ChannelPasswordChangedEvent
 from .notifycliententerview import (
     ClientEnterEvent,
 )
@@ -21,8 +27,16 @@ from .notifyclientmoved import (
     ClientMovedEvent,
     ClientMovedEventBase,
 )
+from .notifyserveredited import ServerEditedEvent
+from .notifytextmessage import TextMessageEvent
 
 __all__ = [
+    "ChannelCreatedEvent",
+    "ChannelDeletedEvent",
+    "ChannelDescriptionChangedEvent",
+    "ChannelEditedEvent",
+    "ChannelMovedEvent",
+    "ChannelPasswordChangedEvent",
     "ClientEnterEvent",
     "ClientLeftBanEvent",
     "ClientLeftConnectLostEvent",
@@ -38,4 +52,6 @@ __all__ = [
     "ClientMovedEventBase",
     "EventBase",
     "EventManager",
+    "ServerEditedEvent",
+    "TextMessageEvent",
 ]
