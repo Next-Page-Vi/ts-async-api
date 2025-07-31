@@ -2,14 +2,21 @@
 
 from collections import defaultdict
 from collections.abc import Awaitable, Callable
-from typing import ClassVar, Optional
+from typing import TYPE_CHECKING, ClassVar, Optional
 
 from pydantic import TypeAdapter
 from sortedcontainers import SortedDict
 
 from ..exception import ParseException
 from ..msg import parse_msg
-from .base import EventBase
+from .base import EventBase, get_event_obj_parent_type_list
+
+if TYPE_CHECKING:
+    from ..client import Client
+else:
+    from typing import Any
+
+    Client = Any
 
 EVENT_LIST: list[type[EventBase]] = []
 
@@ -18,13 +25,13 @@ class EventManager:
     """事件管理器"""
 
     EVENT_TYPE_LIST: ClassVar[dict[str, TypeAdapter[EventBase]]] = {}
-    event_listener: dict[type[EventBase], SortedDict[int, list[Callable[[EventBase], Awaitable[bool]]]]]
+    event_listener: dict[type[EventBase], SortedDict[int, list[Callable[["Client", EventBase], Awaitable[bool]]]]]
 
     def __init__(self) -> None:
         self.event_listener = defaultdict(lambda: SortedDict())
 
     def register(
-        self, event: type[EventBase], callback: Callable[[EventBase], Awaitable[bool]], priority: int = 0
+        self, event: type[EventBase], callback: Callable[["Client", EventBase], Awaitable[bool]], priority: int = 0
     ) -> None:
         """注册事件"""
         priority_event_list = self.event_listener[event]
@@ -43,15 +50,17 @@ class EventManager:
                 return event_ta.validate_python(res)
         return None
 
-    async def dispatch(self, event: EventBase) -> None:
+    async def dispatch(self, client: "Client", event: EventBase) -> None:
         """按优先级顺序分发事件。callback 返回 True 表示跳过后续 callback"""
-        priority_event_list = self.event_listener[type(event)]
-        for callback_list in reversed(list(priority_event_list.values())):
-            for callback in callback_list:
-                if await callback(event):
-                    break
+        event_type_list = get_event_obj_parent_type_list(event)
+        for event_type in event_type_list:
+            priority_event_list = self.event_listener[event_type]
+            for callback_list in reversed(list(priority_event_list.values())):
+                for callback in callback_list:
+                    if await callback(client, event):
+                        break
 
-    def remove(self, event_type: type[EventBase], callback: Callable[[EventBase], Awaitable[bool]]) -> None:
+    def remove(self, event_type: type[EventBase], callback: Callable[["Client", EventBase], Awaitable[bool]]) -> None:
         """手动移除指定的 callback"""
         priority_event_list = self.event_listener[event_type]
         for callback_list in reversed(list(priority_event_list.values())):

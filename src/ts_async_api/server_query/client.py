@@ -8,16 +8,17 @@ from typing import Optional, Self, cast
 
 from pydantic import BaseModel
 
-from ts_async_api.server_query.cmd.clientinfo import ClientInfoArgs, ClientInfoCmd
-
 from .cmd.base import ArgsBase, CmdBase
+from .cmd.clientinfo import ClientInfoArgs, ClientInfoCmd
 from .cmd.clientlist import ClientListArgs, ClientListCmd
 from .cmd.login import LoginArgs, LoginCmd
 from .cmd.servernotifyregister import Event, ServerNotifyRegisterArgs, ServerNotifyRegisterCmd
 from .cmd.use import UseArgs, UseCmd
 from .cmd.version import VersionCmd
 from .datatype import ClientFullInfo, ResBase, Version
-from .event import EventManager
+from .event import EventBase, EventManager
+from .event.notifycliententerview import ClientEnterEvent
+from .event.notifyclientleftview import ClientLeftEventBase
 
 LOGGER = getLogger(__name__)
 
@@ -32,6 +33,20 @@ class ServerStatus(BaseModel, extra="forbid"):
     """服务器状态"""
 
     client_list: dict[int, ClientFullInfo] = {}
+
+    async def update_status_callback(self, client: "Client", event: EventBase) -> bool:
+        """收到服务器事件后更新状态"""
+        if isinstance(event, ClientEnterEvent):
+            client_full_info = await client.execute_cmd(ClientInfoCmd(args=ClientInfoArgs(clid=event.clid)))
+            self.client_list[client_full_info.clid] = client_full_info
+        elif isinstance(event, ClientLeftEventBase):
+            if event.clid in self.client_list:
+                self.client_list.pop(event.clid)
+        return False
+
+
+PRIORITY_HIGH = 999
+PRIORITY_LOW = -1
 
 
 class Client:
@@ -105,7 +120,11 @@ class Client:
                 await self.execute_cmd(ServerNotifyRegisterCmd(args=ServerNotifyRegisterArgs(event=event)))
         # 监听 0 可以收到所有频道的消息
         await self.execute_cmd(ServerNotifyRegisterCmd(args=ServerNotifyRegisterArgs(event=Event.CHANNEL, id=0)))
-        # self.event_manager.register()
+        self.event_manager.register(ClientEnterEvent, self.server_status.update_status_callback, priority=PRIORITY_HIGH)
+        self.event_manager.register(
+            ClientLeftEventBase, self.server_status.update_status_callback, priority=PRIORITY_LOW
+        )
+
         for client_base in (await self.execute_cmd(ClientListCmd(args=ClientListArgs()))).client_list:
             client = await self.execute_cmd(ClientInfoCmd(args=ClientInfoArgs(clid=client_base.clid)))
             self.server_status.client_list[client.clid] = client
@@ -138,7 +157,7 @@ class Client:
             event = self.event_manager.parse_event(msg_payload)
             if event is not None:
                 LOGGER.debug("Recv event: %s", event)
-                self.__task_queue.put_nowait(asyncio.create_task(self.event_manager.dispatch(event)))
+                self.__task_queue.put_nowait(asyncio.create_task(self.event_manager.dispatch(self, event)))
                 continue
             # 否则加入 __msg_queue
             self.__msg_queue.put_nowait(msg_payload)
