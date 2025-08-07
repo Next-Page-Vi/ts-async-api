@@ -4,6 +4,8 @@ import logging
 import os
 from typing import Literal
 
+from .exception import ParseException
+
 __ESCAPE_MAP: dict[int, bytes] = {
     b"\\"[0]: rb"\\",
     b"/"[0]: rb"\/",
@@ -38,9 +40,12 @@ def unescape(data: bytes) -> bytes:
                 if res is not None:
                     result.append(res)
                     i += match_len
-                    continue
-        result.append(data[i])
-        i += 1
+                    break
+            else:
+                raise ParseException(data)
+        else:
+            result.append(data[i])
+            i += 1
     return bytes(result)
 
 
