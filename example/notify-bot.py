@@ -88,7 +88,7 @@ class ClientStatusChangeEventCtx:
                     "用户 %s 从频道 %s 切换到频道 %s",
                     client_info.client_nickname,
                     self.server_status.channel_list[event.cfid].channel_name,
-                    self.server_status.channel_list[event.ctid].channel_name,
+                    self.server_status.channel_list[client_info.cid].channel_name,
                 )
         del self.event_map[event.clid]
 
