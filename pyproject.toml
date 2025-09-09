@@ -5,7 +5,7 @@ description = "Teamspeak async api"
 readme = "README.md"
 authors = [{ name = "plusls", email = "plusls@qq.com" }]
 requires-python = ">=3.12"
-dependencies = ["pydantic>=2.11.7", "sortedcontainers>=2.4.0"]
+dependencies = ["pydantic~=2.10.3", "sortedcontainers>=2.4.0"]
 
 [dependency-groups]
 dev = [
